@@ -1,0 +1,45 @@
+package com.example.ayurlink.model;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.util.List;
+
+@Entity
+@Table(name = "doctors")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@PrimaryKeyJoinColumn(name = "user_id")
+public class Doctor extends User {
+
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
+
+    @Column(nullable = false)
+    private String specialization;
+
+    @NotBlank(message = "License number is required")
+    @Size(min = 5, max = 50, message = "License number must be between 5 and 50 characters")
+    @Column(name = "license_number", unique = true)
+    private String licenseNumber;
+
+    @NotNull(message = "Consultation fee is required")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Consultation fee must be greater than 0")
+    @Column(name = "consultation_fee")
+    private Double consultationFee;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
+    @ElementCollection
+    @CollectionTable(name = "doctor_availability", joinColumns = @JoinColumn(name = "doctor_id"))
+    private List<String> availability; // e.g., ["MON 9-12", "WED 14-17"]
+}
