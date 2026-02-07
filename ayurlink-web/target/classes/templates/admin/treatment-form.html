@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${treatment.id != null ? 'Edit Treatment' : 'Add Treatment'}">Treatment Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .image-preview {
+            margin-top: 10px;
+            max-width: 300px;
+        }
+        .image-preview img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .current-image {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">🌿 Ayur-Link</div>
+        <nav class="sidebar-nav">
+            <!-- Admin Section -->
+            <div class="section-label">ADMIN PORTAL</div>
+            <a th:href="@{/admin/dashboard}" class="active">Dashboard</a>
+            <a th:href="@{/admin/treatments}">Treatments</a>
+            <a th:href="@{/admin/doctors}">Doctors</a>
+            <a th:href="@{/admin/appointments}">Appointments</a>
+            <a th:href="@{/admin/payments}">Payments</a>
+            <a th:href="@{/admin/payments/reports}">Reports</a>
+            <a th:href="@{/admin/admins}">Admin Accounts</a>
+
+            <!-- Public Pages Section -->
+            <div class="public-pages-section">
+                <div class="section-label">PUBLIC PAGES</div>
+                <a th:href="@{/}">🏠 Home</a>
+                <a th:href="@{/treatments}">🌿 Treatments</a>
+                <a th:href="@{/about}">ℹ️ About Us</a>
+                <a th:href="@{/contact}">📞 Contact</a>
+            </div>
+
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn-logout">Logout</button>
+            </form>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <h1 th:text="${treatment.id != null ? 'Edit Treatment' : 'Add New Treatment'}">Treatment Form</h1>
+        </header>
+
+        <div class="dashboard-content">
+
+            <div class="card">
+                <form th:action="@{/admin/treatments/save}" th:object="${treatment}" method="post" enctype="multipart/form-data" >
+                    <input type="hidden" th:field="*{id}">
+
+                    <div class="form-group">
+                        <label for="name">Treatment Name *</label>
+                        <input type="text" id="name" th:field="*{name}" required
+                               placeholder="e.g., Panchakarma Therapy">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description *</label>
+                        <textarea id="description" th:field="*{description}" rows="4" required
+                                  placeholder="Describe the treatment..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cost">Cost (LKR) *</label>
+                            <input type="number" id="cost" th:field="*{cost}" step="0.01" required
+                                   placeholder="e.g., 5000.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="duration">Duration (minutes) *</label>
+                            <input type="number" id="duration" th:field="*{duration}" required
+                                   placeholder="e.g., 60">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="suitableFor">Suitable For</label>
+                        <input type="text" id="suitableFor" th:field="*{suitableFor}"
+                               placeholder="e.g., Back Pain, Stress, Arthritis">
+                    </div>
+                    <div class="form-group">
+                        <label for="imageFile">Treatment Image</label>
+                        <input type="file" id="imageFile" name="imageFile"
+                               accept="image/jpeg,image/png,image/jpg,image/gif"
+                               onchange="previewImage(event)">
+                        <small class="text-muted">Accepted formats: JPG, JPEG, PNG, GIF (Max 5MB)</small>
+
+                        <!-- Show current image if editing -->
+                        <div th:if="${treatment.id != null and treatment.image != null}" class="current-image">
+                            <strong>Current Image:</strong>
+                            <div class="image-preview">
+                                <img th:src="@{/admin/treatment-image/{filename}(filename=${treatment.image})}"
+                                     alt="Current treatment image">
+                            </div>
+                            <small class="text-muted">Upload a new image to replace the current one</small>
+                        </div>
+
+                        <!-- Preview for new image -->
+                        <div id="imagePreview" class="image-preview" style="display: none;">
+                            <strong>New Image Preview:</strong>
+                            <img id="preview" alt="Image preview">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Treatment</button>
+                        <a th:href="@{/admin/treatments}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+<script>
+    function previewImage(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('preview');
+        const previewContainer = document.getElementById('imagePreview');
+
+        if (file) {
+            // Check file size (5MB = 5 * 1024 * 1024 bytes)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                event.target.value = '';
+                previewContainer.style.display = 'none';
+                return;
+            }
+
+            // Check file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please select a valid image file (JPG, JPEG, PNG, or GIF)');
+                event.target.value = '';
+                previewContainer.style.display = 'none';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                previewContainer.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        } else {
+            previewContainer.style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>
